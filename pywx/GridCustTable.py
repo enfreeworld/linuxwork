@@ -3,60 +3,56 @@ import  wx
 import  wx.grid as gridlib
 
 #---------------------------------------------------------------------------
-
 class CustomDataTable(gridlib.PyGridTableBase):
-    def __init__(self, log):
+    def __init__(self, log, tableData):
         gridlib.PyGridTableBase.__init__(self)
         self.log = log
 
-        self.colLabels = ['ID', 'Description', 'Severity', 'Priority', 'Platform',
-                          'Opened?', 'Fixed?', 'Tested?', 'TestFloat']
+        self.colLabels = ['No.', 'Code', 'Name', 'Price', 'Provider']
 
-        self.dataTypes = [gridlib.GRID_VALUE_NUMBER,
-                          gridlib.GRID_VALUE_STRING,
-                          gridlib.GRID_VALUE_CHOICE + ':only in a million years!,wish list,minor,normal,major,critical',
-                          gridlib.GRID_VALUE_NUMBER + ':1,5',
-                          gridlib.GRID_VALUE_CHOICE + ':all,MSW,GTK,other',
-                          gridlib.GRID_VALUE_BOOL,
-                          gridlib.GRID_VALUE_BOOL,
-                          gridlib.GRID_VALUE_BOOL,
-                          gridlib.GRID_VALUE_FLOAT + ':6,2',
+        self.dataTypes = [
+                gridlib.GRID_VALUE_NUMBER,
+                gridlib.GRID_VALUE_NUMBER,
+                  gridlib.GRID_VALUE_STRING,
+                  gridlib.GRID_VALUE_FLOAT + ':6,2',
+                  gridlib.GRID_VALUE_STRING
                           ]
 
-        self.data = [
-            [1010, "The foo doesn't bar", "major", 1, 'MSW', 1, 1, 1, 1.12],
-            [1011, "I've got a wicket in my wocket", "wish list", 2, 'other', 0, 0, 0, 1.50],
-            [1012, "Rectangle() returns a triangle", "critical", 5, 'all', 0, 0, 0, 1.56]
-
-            ]
+        self.data = tableData 
 
 
     #--------------------------------------------------
     # required methods for the wxPyGridTableBase interface
 
     def GetNumberRows(self):
-        return len(self.data) + 1
+        return len(self.data) 
 
     def GetNumberCols(self):
-        return len(self.data[0])
+        return len(self.data[0]) + 1
 
     def IsEmptyCell(self, row, col):
         try:
-            return not self.data[row][col]
+            return not self.data[row][col - 1]
         except IndexError:
-            return True
+            if col == 0:
+                return False
+            else:
+                return True
 
     # Get/Set values in the table.  The Python version of these
     # methods can handle any data-type, (as long as the Editor and
     # Renderer understands the type too,) not just strings as in the
     # C++ version.
     def GetValue(self, row, col):
+        if col == 0:
+            return row + 1
         try:
-            return self.data[row][col]
+            return self.data[row][col - 1]
         except IndexError:
             return ''
 
     def SetValue(self, row, col, value):
+        return
         def innerSetValue(row, col, value):
             try:
                 self.data[row][col] = value
@@ -109,10 +105,10 @@ class CustomDataTable(gridlib.PyGridTableBase):
 
 
 class CustTableGrid(gridlib.Grid):
-    def __init__(self, parent, log):
+    def __init__(self, parent, log, table):
         gridlib.Grid.__init__(self, parent, -1)
 
-        table = CustomDataTable(log)
+        #table = CustomDataTable(log)
 
         # The second parameter means that the grid is to take ownership of the
         # table and will destroy it when done.  Otherwise you would need to keep
@@ -123,7 +119,7 @@ class CustTableGrid(gridlib.Grid):
         self.SetMargins(0,0)
         self.AutoSizeColumns(False)
 
-        gridlib.EVT_GRID_CELL_LEFT_DCLICK(self, self.OnLeftDClick)
+        #gridlib.EVT_GRID_CELL_LEFT_DCLICK(self, self.OnLeftDClick)
 
 
     # I do this because I don't like the default behaviour of not starting the

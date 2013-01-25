@@ -18,7 +18,17 @@ def IsNotSubClass(parent, subject):
     ret = subs.match(subject)
     return ret is None
 
+class TreeItemSelectEvent(wx.PyCommandEvent):
+    def __init__(self, evtType, id, data):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self.data = data
 
+    def GetData(self):
+        return self.data
+# create a new event type
+MyEVT_TREE_SELECT = wx.NewEventType()
+# create a bind object
+EVT_TREE_SELECT = wx.PyEventBinder(MyEVT_TREE_SELECT, 1)
 #---------------------------------------------------------------------------
 
 class MyTreeCtrl(wx.TreeCtrl):
@@ -342,6 +352,8 @@ class TestTreeCtrlPanel(wx.Panel):
             #items = self.tree.GetSelections()
             #print map(self.tree.GetItemText, items)
         event.Skip()
+        evt = TreeItemSelectEvent(MyEVT_TREE_SELECT, self.GetId(), self.tree.GetItemData(self.item).GetData())
+        self.GetEventHandler().ProcessEvent(evt)
 
 
     def OnActivate(self, event):

@@ -27,6 +27,7 @@ SUBCATEGORY = 'select * from categories where category regexp \"^%s/[^/]+$\"'
 GETALLCATEGORY = 'select category from categories where category regexp \"%s($|/.*)\"'
 MATRIALVIEW = 'create view matrialview as select matrial,name,price,provider,category \
 from categories inner join matrials on categories.categoryid = matrials.categoryid'
+GETMALIST = 'select matrial,name,price,provider from matrialview where category regexp \"%s($|/.*)\"'
 SELECTMABYCATEGORY = 'select matrial,name,price,provider,lastcomp(category) from matrialview where category=\"%s\"'
 SELECTMAALL = 'select matrial,name,price,provider,lastcomp(category) from matrialview where category=\"%s\"'
 #SELECTMABYCATEGORY = 'select matrial,name,price,provider from categories inner join matrials on categories.categoryid = matrials.categoryid where category=\"%s\"'
@@ -35,6 +36,7 @@ UPDATECATEGORYS = 'update categories set category=\"%s\" where category=\"%s\"'
 GETIDSBYCATE = 'select categoryid from categories where category regexp \"%s($|/.*)\"'
 GETMABYCATE_R = 'select matrial from categories inner join matrials on categories.categoryid = matrials.categoryid where category regexp \"%s($|/.*)\"'
 DELETECATEGPRYS = 'delete from categories where category regexp \"%s($|/.*)\"'
+
 SEMI_GOODS = 4000000
 SYSTEM_GOODS = 7000000
 def iscompoundma(matrial):
@@ -71,6 +73,7 @@ class erpdb(object):
         self.cxn = db.connect(self.dbPath)
         self.cxn.create_function('REGEXP', 2, regexp)
         self.cxn.create_function('LASTCOMP', 1, get_last_category_component)
+        self.malist = [];
 
 #    def __del__ (self):
 #        self.cxn.close()
@@ -136,8 +139,12 @@ class erpdb(object):
         ''' delete a bom from db '''
         bom_name = self.bomname_by_ma(matrial);
         cur = self.cxn.cursor()
-        cur.execute(DROPBOM % bom_name)
-        cur.execute(DELETEABOM % matrial)
+        if matrial >= SEMI_GOODS:
+            try:
+                cur.execute(DELETEABOM % matrial)
+                cur.execute(DROPBOM % bom_name)
+            except db.DatabaseError, e:
+                print 'del matrial bom error %s\n' % e
         cur.close()
         self.cxn.commit()
 
@@ -146,8 +153,12 @@ class erpdb(object):
         bom_name = self.bomname_by_ma(matrial);
         cur = self.cxn.cursor()
         cur.execute(DELETEMA % matrial)
-        cur.execute(DROPBOM % bom_name)
-        cur.execute(DELETEABOM % matrial)
+        if matrial >= SEMI_GOODS:
+            try:
+                cur.execute(DELETEABOM % matrial)
+                cur.execute(DROPBOM % bom_name)
+            except db.DatabaseError, e:
+                print 'del matrial bom error %s\n' % e
         cur.close()
         self.cxn.commit()
 
@@ -246,6 +257,17 @@ class erpdb(object):
         cur.close()
         self.cxn.commit()
 
+    def set_data_source(self, cate):
+        cur = self.cxn.cursor()
+        cur.execute(GETMALIST % cate)
+        del self.malist
+        self.malist = cur.fetchall();
+        if self.malist is None or len(self.malist) < 1:
+            self.malist = [[0,'',0,'']]
+        cur.close()
+        return self.malist
+
+        
 
 if __name__ == '__main__':
     testdb = erpdb()

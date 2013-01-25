@@ -46,6 +46,9 @@ def TreeData():
     yield '/semi-product/shihua'
     yield '/semi-product/huanbao'
 
+tableData = [
+        ]
+
 class MainFrame(wx.Frame):
     ''' main frame 
             menu
@@ -98,11 +101,14 @@ class MainFrame(wx.Frame):
 
         # add categories tree view
         self.categoriesview = modTree.TestTreeCtrlPanel(self, self.log,myDb.get_categories_name)
+        self.Bind(modTree.EVT_TREE_SELECT, self.OnTreeSelChanged, self.categoriesview)
         leftSizer = wx.BoxSizer(wx.VERTICAL)
         leftSizer.Add(buttonSizer, 0, wx.EXPAND)
         leftSizer.Add(self.categoriesview, 1, wx.EXPAND)
 
-        self.grid = modGrid.CustTableGrid(self, self.log)
+        # matrials table view
+        self.griddata = modGrid.CustomDataTable(self.log, myDb.set_data_source(''))
+        self.grid = modGrid.CustTableGrid(self, self.log, self.griddata)
         centralSizer = wx.BoxSizer(wx.HORIZONTAL)
         centralSizer.Add(leftSizer, 0, wx.EXPAND)
         centralSizer.AddSpacer(15)
@@ -115,6 +121,11 @@ class MainFrame(wx.Frame):
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
         self.Show(True)
+
+    def OnTreeSelChanged(self,e):
+        self.griddata = modGrid.CustomDataTable(self.log, myDb.set_data_source(e.GetData()))
+        self.grid.SetTable(self.griddata)
+        self.grid.ForceRefresh()
 
     def OnAbout(self,e):
         self.log.WriteText("click about menu %s\n" % str(e))
@@ -169,6 +180,8 @@ class MainFrame(wx.Frame):
                 print 'save Delete end'
         self.categoriesview.ClearOperates()
 
+        self.grid.ForceRefresh()
+
         for bName in self.button_dict.keys() :
             b = self.button_dict[bName]
             b.Enable()
@@ -177,9 +190,16 @@ class MainFrame(wx.Frame):
     def OnClickClear(self,e):
         self.log.Clear()
 
+class myApp(wx.App):
+    ''' my app '''
+    def OnInit(self):
+        self.frame = MainFrame(None, "ERP")
+        self.frame.Show()
+        self.SetTopWindow(self.frame)
+        return True
+
 
 if __name__ == '__main__':
-    app = wx.App(False)
-    frame = MainFrame(None,  "Simple Erp")
+    app = myApp(False)
     app.MainLoop()
 
